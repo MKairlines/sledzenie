@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Śledzenie kierowcy</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; }
+        button { font-size: 20px; padding: 10px; margin: 10px; }
+        #status { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Udostępnianie lokalizacji</h2>
+    <button id="startBtn">Start śledzenia</button>
+    <button id="stopBtn" disabled>Zakończ śledzenie</button>
+    <div id="status">Nieaktywne</div>
+
+    <script>
+        let watchId = null;
+
+        const statusDiv = document.getElementById("status");
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
+
+        function start() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        statusDiv.innerText = `Twoja lokalizacja: ${latitude}, ${longitude}`;
+                        // Tu zamiast console.log - wysyłasz dane na serwer np. fetch()
+                        console.log(`Wysyłam lokalizację: ${latitude}, ${longitude}`);
+                    },
+                    (err) => {
+                        console.error("Błąd pobierania lokalizacji:", err);
+                        statusDiv.innerText = "Nie udało się pobrać lokalizacji.";
+                    },
+                    { enableHighAccuracy: true }
+                );
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                alert("Twoja przeglądarka nie wspiera geolokalizacji!");
+            }
+        }
+
+        function stop() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                statusDiv.innerText = "Nieaktywne";
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        startBtn.onclick = start;
+        stopBtn.onclick = stop;
+    </script>
+</body>
+</html>
