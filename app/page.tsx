@@ -41,9 +41,13 @@ export default function Home() {
       const result = await response.json();
       console.log('Backend response:', result.message);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) { // Changed 'any' to 'unknown'
       console.error('Network error or problem with fetch operation:', error);
-      showMessage(`Błąd sieci: Nie można połączyć się z serwerem. ${error.message}`);
+      let errorMessage = 'Nieznany błąd sieci.';
+      if (error instanceof Error) { // Type guard to check if error is an instance of Error
+        errorMessage = error.message;
+      }
+      showMessage(`Błąd sieci: Nie można połączyć się z serwerem. ${errorMessage}`);
       return false;
     }
   };
