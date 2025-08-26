@@ -1,34 +1,46 @@
 // app/page.tsx
-'use client'; // This directive makes the component a Client Component, allowing browser APIs like geolocation
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const [statusText, setStatusText] = useState('Nieaktywne');
   const [isTracking, setIsTracking] = useState(false);
-  const watchId = useRef<number | null>(null); // useRef to keep track of watchId across renders
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const apiUrl = '/api/track-location'; // Next.js API route
+  const watchId = useRef<number | null>(null);
 
-  // Custom function to show messages instead of alert()
+  // The API endpoint is now /api/track-location
+  const apiUrl = '/api/track-location';
+
+  // Generate or retrieve userId from localStorage
+  useEffect(() => {
+    let storedUserId = localStorage.getItem('trackingUserId');
+    if (!storedUserId) {
+      storedUserId = crypto.randomUUID(); // Generate a new UUID
+      localStorage.setItem('trackingUserId', storedUserId);
+    }
+    setUserId(storedUserId);
+  }, []);
+
   const showMessage = (message: string) => {
-    // In a real app, you'd use a modal library or state to display this.
-    // For now, we'll log to console and update a simple text area if available.
-    console.warn("User Message:", message);
-    // You could also add a state variable here and display it in a simple div
-    // For example: setNotificationMessage(message);
-    alert(message); // Using alert for simplicity, but a custom modal is recommended for production
+    alert(message); // Using alert for simplicity, but a custom modal is recommended
   };
 
-  // Function to send location data to the backend
-  const sendLocationToServer = async (latitude: number, longitude: number) => {
+  const sendLocationToServer = async (latitude: number, longitude: number, trackingStatus: boolean) => {
+    if (!userId) {
+      console.error("User ID is not available.");
+      showMessage("Błąd: ID użytkownika nie jest dostępne.");
+      return false;
+    }
+
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ latitude, longitude }),
+        body: JSON.stringify({ userId, latitude, longitude, isTracking: trackingStatus }),
       });
 
       if (!response.ok) {
@@ -41,10 +53,10 @@ export default function Home() {
       const result = await response.json();
       console.log('Backend response:', result.message);
       return true;
-    } catch (error: unknown) { // Changed 'any' to 'unknown'
+    } catch (error: unknown) {
       console.error('Network error or problem with fetch operation:', error);
       let errorMessage = 'Nieznany błąd sieci.';
-      if (error instanceof Error) { // Type guard to check if error is an instance of Error
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       showMessage(`Błąd sieci: Nie można połączyć się z serwerem. ${errorMessage}`);
@@ -53,64 +65,84 @@ export default function Home() {
   };
 
   const startTracking = () => {
+    if (!userId) {
+      showMessage("Ładowanie ID użytkownika, proszę czekać...");
+      return;
+    }
+
     if (navigator.geolocation) {
-      // Use watchPosition to continuously get updates
       watchId.current = navigator.geolocation.watchPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           setStatusText(`Twoja lokalizacja: ${latitude}, ${longitude}`);
-          await sendLocationToServer(latitude, longitude);
+          await sendLocationToServer(latitude, longitude, true);
         },
         (err) => {
           console.error("Błąd pobierania lokalizacji:", err);
           setStatusText("Nie udało się pobrać lokalizacji.");
           showMessage("Nie udało się pobrać lokalizacji. Upewnij się, że masz włączoną geolokalizację.");
-          stopTracking(); // Stop watching if there's an error
+          stopTracking();
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
       setIsTracking(true);
+      // Send initial status update with dummy coords, actual coords will follow
+      sendLocationToServer(0, 0, true);
     } else {
       showMessage("Twoja przeglądarka nie wspiera geolokalizacji!");
     }
   };
 
-  const stopTracking = () => {
+  const stopTracking = async () => {
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
     }
     setIsTracking(false);
     setStatusText("Nieaktywne");
+    if (userId) {
+      // Send a final update to indicate tracking stopped
+      await sendLocationToServer(0, 0, false);
+    }
   };
 
-  // Clean up the watchPosition when the component unmounts
   useEffect(() => {
+    // Cleanup: When component unmounts, try to send a stop signal
     return () => {
       if (watchId.current !== null) {
         navigator.geolocation.clearWatch(watchId.current);
       }
+      if (userId) {
+        // Best effort to mark as not tracking when component unmounts
+        sendLocationToServer(0, 0, false).catch(console.error);
+      }
     };
-  }, []); // Empty dependency array ensures this runs once on mount and once on unmount
+  }, [userId]); // Dependency on userId to ensure it's available for cleanup
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Udostępnianie lokalizacji</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Śledzenie</h2>
+        {!userId && <p className="text-center text-blue-500 mb-4">Generowanie ID użytkownika...</p>}
+        {userId && (
+            <p className="text-sm text-gray-600 text-center mb-4 break-all">
+                Twój ID: <span className="font-mono bg-gray-100 p-1 rounded">{userId}</span>
+            </p>
+        )}
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
             onClick={startTracking}
-            disabled={isTracking}
+            disabled={isTracking || !userId}
             className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
-                        ${isTracking ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                        ${isTracking || !userId ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
           >
             Start śledzenia
           </button>
           <button
             onClick={stopTracking}
-            disabled={!isTracking}
+            disabled={!isTracking || !userId}
             className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
-                        ${!isTracking ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                        ${!isTracking || !userId ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
           >
             Zakończ śledzenie
           </button>
