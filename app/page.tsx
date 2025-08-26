@@ -1,103 +1,120 @@
-import Image from "next/image";
+// app/page.tsx
+'use client'; // This directive makes the component a Client Component, allowing browser APIs like geolocation
+
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [statusText, setStatusText] = useState('Nieaktywne');
+  const [isTracking, setIsTracking] = useState(false);
+  const watchId = useRef<number | null>(null); // useRef to keep track of watchId across renders
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const apiUrl = '/api/track-location'; // Next.js API route
+
+  // Custom function to show messages instead of alert()
+  const showMessage = (message: string) => {
+    // In a real app, you'd use a modal library or state to display this.
+    // For now, we'll log to console and update a simple text area if available.
+    console.warn("User Message:", message);
+    // You could also add a state variable here and display it in a simple div
+    // For example: setNotificationMessage(message);
+    alert(message); // Using alert for simplicity, but a custom modal is recommended for production
+  };
+
+  // Function to send location data to the backend
+  const sendLocationToServer = async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ latitude, longitude }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backend error:', errorData.message);
+        showMessage(`Błąd wysyłania lokalizacji: ${errorData.message}`);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log('Backend response:', result.message);
+      return true;
+    } catch (error: any) {
+      console.error('Network error or problem with fetch operation:', error);
+      showMessage(`Błąd sieci: Nie można połączyć się z serwerem. ${error.message}`);
+      return false;
+    }
+  };
+
+  const startTracking = () => {
+    if (navigator.geolocation) {
+      // Use watchPosition to continuously get updates
+      watchId.current = navigator.geolocation.watchPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setStatusText(`Twoja lokalizacja: ${latitude}, ${longitude}`);
+          await sendLocationToServer(latitude, longitude);
+        },
+        (err) => {
+          console.error("Błąd pobierania lokalizacji:", err);
+          setStatusText("Nie udało się pobrać lokalizacji.");
+          showMessage("Nie udało się pobrać lokalizacji. Upewnij się, że masz włączoną geolokalizację.");
+          stopTracking(); // Stop watching if there's an error
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+      setIsTracking(true);
+    } else {
+      showMessage("Twoja przeglądarka nie wspiera geolokalizacji!");
+    }
+  };
+
+  const stopTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    setIsTracking(false);
+    setStatusText("Nieaktywne");
+  };
+
+  // Clean up the watchPosition when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+    };
+  }, []); // Empty dependency array ensures this runs once on mount and once on unmount
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Udostępnianie lokalizacji</h2>
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+          <button
+            onClick={startTracking}
+            disabled={isTracking}
+            className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
+                        ${isTracking ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Start śledzenia
+          </button>
+          <button
+            onClick={stopTracking}
+            disabled={!isTracking}
+            className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
+                        ${!isTracking ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
           >
-            Read our docs
-          </a>
+            Zakończ śledzenie
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <div id="status" className="bg-gray-100 p-4 rounded-lg text-gray-700 font-bold text-lg text-center">
+          {statusText}
+        </div>
+      </div>
+    </main>
   );
 }
