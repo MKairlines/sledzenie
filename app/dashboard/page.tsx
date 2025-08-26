@@ -53,7 +53,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
-        <p className="text-xl text-blue-500">Ładowanie dashboardu...</p>
+        <p className="text-xl text-blue-500">Ładowanie...</p>
       </main>
     );
   }
@@ -69,7 +69,7 @@ export default function DashboardPage() {
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl w-full mt-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Dashboard śledzenia lokalizacji</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Śledzone lokalizacje</h2>
 
         {activeLocations.length === 0 ? (
           <p className="text-gray-600 text-center text-lg">Brak aktywnych lokalizacji do wyświetlenia.</p>
