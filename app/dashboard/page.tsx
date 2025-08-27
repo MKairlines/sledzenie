@@ -19,10 +19,10 @@ export default function DashboardPage(): JSX.Element {
 
   // Stan do dynamicznego ładowania komponentów mapy (tylko klient)
   const [mapComponents, setMapComponents] = useState<{
-    MapContainer: any;
-    TileLayer: any;
-    Marker: any;
-    Popup: any;
+    MapContainer: React.ComponentType<unknown> | null;
+    TileLayer: React.ComponentType<unknown> | null;
+    Marker: React.ComponentType<unknown> | null;
+    Popup: React.ComponentType<unknown> | null;
   } | null>(null);
 
   const apiUrl = '/api/track-location';
@@ -33,7 +33,7 @@ export default function DashboardPage(): JSX.Element {
       const response = await fetch(apiUrl);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as any).message || 'Failed to fetch locations');
+        throw new Error((errorData as { message?: string }).message || 'Failed to fetch locations');
       }
       const data: TrackedLocation[] = await response.json();
       setActiveLocations(data);
@@ -104,7 +104,12 @@ export default function DashboardPage(): JSX.Element {
     );
   }
 
-  const { MapContainer, TileLayer, Marker, Popup } = mapComponents || ({} as any);
+  const { MapContainer, TileLayer, Marker, Popup } = (mapComponents ?? {}) as {
+    MapContainer?: React.ComponentType<unknown>;
+    TileLayer?: React.ComponentType<unknown>;
+    Marker?: React.ComponentType<unknown>;
+    Popup?: React.ComponentType<unknown>;
+  };
 
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
