@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import 'leaflet/dist/leaflet.css'; // 
+import 'leaflet/dist/leaflet.css';
+
+// ✅ Import only types (safe for Next.js)
+import type { MapContainerProps, TileLayerProps, MarkerProps, PopupProps } from 'react-leaflet';
 
 // Interfejs do opisu lokalizacji
 interface TrackedLocation {
@@ -12,18 +15,21 @@ interface TrackedLocation {
   isTracking: boolean;
 }
 
+// Typy komponentów mapy (żadnego any!)
+type MapComponents = {
+  MapContainer: React.ComponentType<MapContainerProps>;
+  TileLayer: React.ComponentType<TileLayerProps>;
+  Marker: React.ComponentType<MarkerProps>;
+  Popup: React.ComponentType<PopupProps>;
+} | null;
+
 export default function DashboardPage() {
   const [activeLocations, setActiveLocations] = useState<TrackedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Stan do dynamicznego ładowania komponentów mapy (tylko klient)
-  const [mapComponents, setMapComponents] = useState<{
-    MapContainer: React.ComponentType<any> | null;
-    TileLayer: React.ComponentType<any> | null;
-    Marker: React.ComponentType<any> | null;
-    Popup: React.ComponentType<any> | null;
-  } | null>(null);
+  const [mapComponents, setMapComponents] = useState<MapComponents>(null);
 
   const apiUrl = '/api/track-location';
   const POLLING_INTERVAL_MS = 3000;
@@ -96,12 +102,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { MapContainer, TileLayer, Marker, Popup } = (mapComponents ?? {}) as {
-    MapContainer?: React.ComponentType<any>;
-    TileLayer?: React.ComponentType<any>;
-    Marker?: React.ComponentType<any>;
-    Popup?: React.ComponentType<any>;
-  };
+  const { MapContainer, TileLayer, Marker, Popup } = mapComponents ?? {};
 
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
@@ -118,7 +119,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
             {/* Sekcja Mapy */}
             <div className="md:w-2/3 w-full h-[600px] rounded-lg overflow-hidden shadow-md">
-              {mapComponents && MapContainer ? (
+              {mapComponents && MapContainer && TileLayer && Marker && Popup ? (
                 <MapContainer
                   center={
                     activeLocations.length > 0
