@@ -77,7 +77,7 @@ export default function DashboardPage() {
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-7xl mt-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Dashboard śledzenia lokalizacji</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Śledzone lokalizacje</h2>
 
         {activeLocations.length === 0 ? (
           <p className="text-gray-600 text-center text-lg">Brak aktywnych lokalizacji do wyświetlenia.</p>
