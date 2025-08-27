@@ -1,7 +1,7 @@
-// app/dashboard/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import 'leaflet/dist/leaflet.css'; // 
 
 // Interfejs do opisu lokalizacji
 interface TrackedLocation {
@@ -19,14 +19,14 @@ export default function DashboardPage() {
 
   // Stan do dynamicznego ładowania komponentów mapy (tylko klient)
   const [mapComponents, setMapComponents] = useState<{
-    MapContainer: React.ComponentType<unknown> | null;
-    TileLayer: React.ComponentType<unknown> | null;
-    Marker: React.ComponentType<unknown> | null;
-    Popup: React.ComponentType<unknown> | null;
+    MapContainer: React.ComponentType<any> | null;
+    TileLayer: React.ComponentType<any> | null;
+    Marker: React.ComponentType<any> | null;
+    Popup: React.ComponentType<any> | null;
   } | null>(null);
 
   const apiUrl = '/api/track-location';
-  const POLLING_INTERVAL_MS = 3000; // Poll co 3 sekundy
+  const POLLING_INTERVAL_MS = 3000;
 
   const fetchLocations = async () => {
     try {
@@ -48,18 +48,13 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    // Ładowanie biblioteki Leaflet i react-leaflet tylko po stronie klienta
     const loadMapComponents = async () => {
       try {
-        // dynamiczny import CSS Leaflet po stronie klienta
-        await import('leaflet/dist/leaflet.css');
-
         const leaflet = await import('leaflet');
         const rl = await import('react-leaflet');
 
-        // Naprawa problemu z ikonami Leaflet w Next.js - ścieżki do plików umieść w /public/leaflet
+        // ✅ Fix ikon Leaflet w Next.js
         if (typeof window !== 'undefined') {
-          // Jeśli pliki znajdują się w /public/leaflet/marker-icon.png itd.
           leaflet.Icon.Default.mergeOptions({
             iconRetinaUrl: '/leaflet/marker-icon-2x.png',
             iconUrl: '/leaflet/marker-icon.png',
@@ -67,7 +62,6 @@ export default function DashboardPage() {
           });
         }
 
-        // ustawiamy tylko potrzebne komponenty
         setMapComponents({
           MapContainer: rl.MapContainer,
           TileLayer: rl.TileLayer,
@@ -80,9 +74,7 @@ export default function DashboardPage() {
     };
 
     loadMapComponents();
-
-    setLoading(true);
-    fetchLocations(); // Początkowe pobranie danych
+    fetchLocations();
 
     const intervalId = setInterval(fetchLocations, POLLING_INTERVAL_MS);
     return () => clearInterval(intervalId);
@@ -105,19 +97,23 @@ export default function DashboardPage() {
   }
 
   const { MapContainer, TileLayer, Marker, Popup } = (mapComponents ?? {}) as {
-    MapContainer?: React.ComponentType<unknown>;
-    TileLayer?: React.ComponentType<unknown>;
-    Marker?: React.ComponentType<unknown>;
-    Popup?: React.ComponentType<unknown>;
+    MapContainer?: React.ComponentType<any>;
+    TileLayer?: React.ComponentType<any>;
+    Marker?: React.ComponentType<any>;
+    Popup?: React.ComponentType<any>;
   };
 
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-7xl mt-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Dashboard śledzenia lokalizacji</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+          Dashboard śledzenia lokalizacji
+        </h2>
 
         {activeLocations.length === 0 ? (
-          <p className="text-gray-600 text-center text-lg">Brak aktywnych lokalizacji do wyświetlenia.</p>
+          <p className="text-gray-600 text-center text-lg">
+            Brak aktywnych lokalizacji do wyświetlenia.
+          </p>
         ) : (
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
             {/* Sekcja Mapy */}
@@ -144,7 +140,8 @@ export default function DashboardPage() {
                         <div className="font-semibold text-gray-800">Użytkownik:</div>
                         <div className="font-mono text-sm break-all">{loc.userId}</div>
                         <div className="mt-2 text-xs text-gray-600">
-                          Ostatnia aktualizacja: <br /> {new Date(loc.timestamp).toLocaleString()}
+                          Ostatnia aktualizacja: <br />{' '}
+                          {new Date(loc.timestamp).toLocaleString()}
                         </div>
                       </Popup>
                     </Marker>
@@ -160,9 +157,15 @@ export default function DashboardPage() {
               <table className="min-w-full bg-white rounded-lg shadow-md">
                 <thead className="bg-gray-200">
                   <tr>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">ID Użytkownika</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Szerokość</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Długość</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">
+                      ID Użytkownika
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                      Szerokość
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                      Długość
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
