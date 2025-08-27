@@ -3,32 +3,6 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Dynamiczny import komponentu MapContainer, aby zapobiec błędom podczas renderowania po stronie serwera (SSR)
-const DynamicMap = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), {
-  ssr: false // Wyłączanie renderowania po stronie serwera dla tego komponentu
-});
-const DynamicTileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), {
-  ssr: false
-});
-const DynamicMarker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), {
-  ssr: false
-});
-const DynamicPopup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), {
-  ssr: false
-});
-
-// Domyślne ikony Leaflet są potrzebne do wyświetlania markerów
-// To jest workaround dla Next.js, który nie radzi sobie z domyślnymi ikonami w React-Leaflet
-if (typeof window !== 'undefined') {
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: '/leaflet/marker-icon-2x.png',
-    iconUrl: '/leaflet/marker-icon.png',
-    shadowUrl: '/leaflet/marker-shadow.png',
-  });
-}
 
 interface TrackedLocation {
   userId: string;
@@ -37,6 +11,12 @@ interface TrackedLocation {
   timestamp: number; // Unix timestamp
   isTracking: boolean;
 }
+
+// Komponent mapy, który będzie importowany dynamicznie
+const MapComponent = dynamic(
+  () => import('./MapComponent'),
+  { ssr: false } // Wyłączanie renderowania po stronie serwera
+);
 
 export default function DashboardPage() {
   const [activeLocations, setActiveLocations] = useState<TrackedLocation[]>([]);
@@ -77,10 +57,6 @@ export default function DashboardPage() {
     return () => clearInterval(intervalId); // Czyszczenie interwału po odmontowaniu komponentu
   }, []);
 
-  // Ustawienie centrum mapy na pierwszą aktywną lokalizację, w przeciwnym razie domyślnie na Warszawę
-  const mapCenter: [number, number] = activeLocations.length > 0
-    ? [activeLocations[0].latitude, activeLocations[0].longitude]
-    : [52.2297, 21.0122];
 
   if (loading) {
     return (
@@ -109,28 +85,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
             {/* Sekcja Mapy */}
             <div className="md:w-2/3 w-full h-[600px] rounded-lg overflow-hidden shadow-md">
-              <DynamicMap
-                center={mapCenter}
-                zoom={6}
-                scrollWheelZoom={true}
-                className="h-full w-full"
-              >
-                <DynamicTileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {activeLocations.map((loc) => (
-                  <DynamicMarker key={loc.userId} position={[loc.latitude, loc.longitude]}>
-                    <DynamicPopup>
-                      <div className="font-semibold text-gray-800">Użytkownik:</div>
-                      <div className="font-mono text-sm break-all">{loc.userId}</div>
-                      <div className="mt-2 text-xs text-gray-600">
-                        Ostatnia aktualizacja: <br /> {new Date(loc.timestamp).toLocaleString()}
-                      </div>
-                    </DynamicPopup>
-                  </DynamicMarker>
-                ))}
-              </DynamicMap>
+                <MapComponent locations={activeLocations} />
             </div>
 
             {/* Sekcja Tabeli */}
