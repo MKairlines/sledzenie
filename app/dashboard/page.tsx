@@ -1,9 +1,9 @@
 // app/dashboard/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useEffect, useState } from 'react';
 
+// Interfejs do opisu lokalizacji
 interface TrackedLocation {
   userId: string;
   latitude: number;
@@ -12,18 +12,19 @@ interface TrackedLocation {
   isTracking: boolean;
 }
 
-// Komponent mapy, który będzie importowany dynamicznie
-const MapComponent = dynamic(
-  () => import('./MapComponent'),
-  { ssr: false } // Wyłączanie renderowania po stronie serwera
-);
-
-export default function DashboardPage() {
+export default function DashboardPage(): JSX.Element {
   const [activeLocations, setActiveLocations] = useState<TrackedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // The API endpoint to fetch all locations is /api/track-location
+  // Stan do dynamicznego ładowania komponentów mapy (tylko klient)
+  const [mapComponents, setMapComponents] = useState<{
+    MapContainer: any;
+    TileLayer: any;
+    Marker: any;
+    Popup: any;
+  } | null>(null);
+
   const apiUrl = '/api/track-location';
   const POLLING_INTERVAL_MS = 3000; // Poll co 3 sekundy
 
@@ -31,17 +32,15 @@ export default function DashboardPage() {
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch locations');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as any).message || 'Failed to fetch locations');
       }
       const data: TrackedLocation[] = await response.json();
       setActiveLocations(data);
     } catch (err: unknown) {
       console.error('Error fetching locations:', err);
       let errorMessage = 'Nieznany błąd podczas pobierania lokalizacji.';
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
+      if (err instanceof Error) errorMessage = err.message;
       setError(`Błąd: ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -49,14 +48,45 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    // Ładowanie biblioteki Leaflet i react-leaflet tylko po stronie klienta
+    const loadMapComponents = async () => {
+      try {
+        // dynamiczny import CSS Leaflet po stronie klienta
+        await import('leaflet/dist/leaflet.css');
+
+        const leaflet = await import('leaflet');
+        const rl = await import('react-leaflet');
+
+        // Naprawa problemu z ikonami Leaflet w Next.js - ścieżki do plików umieść w /public/leaflet
+        if (typeof window !== 'undefined') {
+          // Jeśli pliki znajdują się w /public/leaflet/marker-icon.png itd.
+          leaflet.Icon.Default.mergeOptions({
+            iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+            iconUrl: '/leaflet/marker-icon.png',
+            shadowUrl: '/leaflet/marker-shadow.png',
+          });
+        }
+
+        // ustawiamy tylko potrzebne komponenty
+        setMapComponents({
+          MapContainer: rl.MapContainer,
+          TileLayer: rl.TileLayer,
+          Marker: rl.Marker,
+          Popup: rl.Popup,
+        });
+      } catch (err) {
+        console.error('Błąd ładowania komponentów mapy:', err);
+      }
+    };
+
+    loadMapComponents();
+
     setLoading(true);
     fetchLocations(); // Początkowe pobranie danych
 
     const intervalId = setInterval(fetchLocations, POLLING_INTERVAL_MS);
-
-    return () => clearInterval(intervalId); // Czyszczenie interwału po odmontowaniu komponentu
+    return () => clearInterval(intervalId);
   }, []);
-
 
   if (loading) {
     return (
@@ -74,10 +104,12 @@ export default function DashboardPage() {
     );
   }
 
+  const { MapContainer, TileLayer, Marker, Popup } = mapComponents || ({} as any);
+
   return (
     <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-7xl mt-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Śledzone lokalizacje</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Dashboard śledzenia lokalizacji</h2>
 
         {activeLocations.length === 0 ? (
           <p className="text-gray-600 text-center text-lg">Brak aktywnych lokalizacji do wyświetlenia.</p>
@@ -85,7 +117,37 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
             {/* Sekcja Mapy */}
             <div className="md:w-2/3 w-full h-[600px] rounded-lg overflow-hidden shadow-md">
-                <MapComponent locations={activeLocations} />
+              {mapComponents && MapContainer ? (
+                <MapContainer
+                  center={
+                    activeLocations.length > 0
+                      ? [activeLocations[0].latitude, activeLocations[0].longitude]
+                      : [52.2297, 21.0122]
+                  }
+                  zoom={6}
+                  scrollWheelZoom={true}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  {activeLocations.map((loc) => (
+                    <Marker key={loc.userId} position={[loc.latitude, loc.longitude]}>
+                      <Popup>
+                        <div className="font-semibold text-gray-800">Użytkownik:</div>
+                        <div className="font-mono text-sm break-all">{loc.userId}</div>
+                        <div className="mt-2 text-xs text-gray-600">
+                          Ostatnia aktualizacja: <br /> {new Date(loc.timestamp).toLocaleString()}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full">Ładowanie mapy...</div>
+              )}
             </div>
 
             {/* Sekcja Tabeli */}
