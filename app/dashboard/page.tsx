@@ -12,7 +12,7 @@ interface TrackedLocation {
   isTracking: boolean;
 }
 
-export default function DashboardPage(): JSX.Element {
+export default function DashboardPage() {
   const [activeLocations, setActiveLocations] = useState<TrackedLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
