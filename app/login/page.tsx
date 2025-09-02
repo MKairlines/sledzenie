@@ -30,7 +30,7 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Demo Login</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Zaloguj się</h2>
 
         {error && (
           <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
