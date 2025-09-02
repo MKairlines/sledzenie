@@ -18,7 +18,7 @@ export default function LoginPage() {
       localStorage.setItem('auth', 'true');
 
       // Redirect to dashboard
-      router.push('/dashboard');
+      router.push('/main');
     } else {
       setError('Nieprawidłowy login lub hasło');
     }
