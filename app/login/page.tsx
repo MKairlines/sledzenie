@@ -5,22 +5,25 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Demo check
-    if (username === '12345678' && password === 'haslo') {
-      // Save simple "session"
-      localStorage.setItem('auth', 'true');
+    const normalized = orderNumber.replace(/\D/g, '');
+    if (/^\d{8}$/.test(normalized)) {
+      const existingOrderNumber = localStorage.getItem('orderNumber');
+      if (existingOrderNumber && existingOrderNumber === normalized) {
+        setError('przesyłka już jest śledzona. Wpisz inny numer');
+        return;
+      }
 
-      // Redirect to dashboard
+      localStorage.setItem('auth', 'true');
+      localStorage.setItem('orderNumber', normalized);
       router.push('/main');
     } else {
-      setError('Nieprawidłowy login lub hasło');
+      setError('Wprowadź poprawnie 8-cyfrowy numer przewozu');
     }
   };
 
@@ -30,7 +33,7 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Zaloguj się</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Podaj numer przewozu</h2>
 
         {error && (
           <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
@@ -38,17 +41,10 @@ export default function LoginPage() {
 
         <input
           type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-lg"
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Numer przewozu"
+          value={orderNumber}
+          onChange={(e) => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
+          maxLength={8}
           className="w-full mb-6 p-3 border rounded-lg"
         />
 
@@ -56,7 +52,7 @@ export default function LoginPage() {
           type="submit"
           className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600"
         >
-          Login
+          Dalej
         </button>
       </form>
     </main>
