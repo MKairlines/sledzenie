@@ -7,29 +7,31 @@ export default function Home() {
   const [statusText, setStatusText] = useState('Nieaktywne');
   const [isTracking, setIsTracking] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userIdInitError, setUserIdInitError] = useState<string | null>(null); // New state for userId init errors
+  const [userIdInitError, setUserIdInitError] = useState<string | null>(null); // Init error if order number missing
 
   const watchId = useRef<number | null>(null);
 
   // The API endpoint is now /api/track-location
   const apiUrl = '/api/track-location';
 
-  // Generate or retrieve userId from localStorage
+  // Retrieve shipment number (orderNumber) from localStorage
   useEffect(() => {
     try {
-      let storedUserId = localStorage.getItem('trackingUserId');
-      if (!storedUserId) {
-        storedUserId = crypto.randomUUID(); // Generate a new UUID
-        localStorage.setItem('trackingUserId', storedUserId);
+      const storedOrderNumber = localStorage.getItem('orderNumber');
+      if (!storedOrderNumber) {
+        const msg = 'Brak numeru przesyłki. Zacznij jeszcze raz.';
+        setUserIdInitError(msg);
+        showMessage(msg);
+        return;
       }
-      setUserId(storedUserId);
+      setUserId(storedOrderNumber);
     } catch (error: unknown) {
-      console.error("Error generating or storing userId:", error);
-      let errorMessage = 'Nie można wygenerować lub zapisać ID użytkownika.';
+      console.error("Error reading orderNumber:", error);
+      let errorMessage = 'Nie można odczytać numeru przesyłki.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      setUserIdInitError(`Błąd inicjalizacji ID użytkownika: ${errorMessage}. Śledzenie niemożliwe.`);
+      setUserIdInitError(`Błąd inicjalizacji numeru przesyłki: ${errorMessage}. Śledzenie niemożliwe.`);
       showMessage(`Krytyczny błąd: ${errorMessage}. Śledzenie niemożliwe.`);
     }
   }, []);
@@ -82,8 +84,8 @@ export default function Home() {
       showMessage(userIdInitError);
       return;
     }
-    if (typeof userId !== 'string' || !userId) { // Ensure userId is a string
-      showMessage("ID użytkownika jest niedostępne. Proszę czekać lub odświeżyć stronę.");
+    if (typeof userId !== 'string' || !userId) { // Ensure order number is present
+      showMessage("Numer przesyłki jest niedostępny. Proszę się zalogować.");
       return;
     }
 
@@ -104,7 +106,7 @@ export default function Home() {
       );
       setIsTracking(true);
       // Send initial status update with dummy coords, actual coords will follow
-      sendLocationToServer(userId, 0, 0, true); // Pass userId explicitly
+      sendLocationToServer(userId, 0, 0, true); // Using orderNumber as identifier
     } else {
       showMessage("Twoja przeglądarka nie wspiera geolokalizacji!");
     }
@@ -131,7 +133,7 @@ export default function Home() {
       }
       if (userId) {
         // Best effort to mark as not tracking when component unmounts
-        sendLocationToServer(userId, 0, 0, false).catch(console.error); // Pass userId explicitly
+        sendLocationToServer(userId, 0, 0, false).catch(console.error); // Using orderNumber as identifier
       }
     };
   }, [userId, sendLocationToServer]); // Added sendLocationToServer to dependencies to ensure correct closure
@@ -140,11 +142,11 @@ export default function Home() {
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Śledzenie</h2>
-        {!userId && !userIdInitError && <p className="text-center text-blue-500 mb-4">Generowanie ID użytkownika...</p>}
+        {!userId && !userIdInitError && <p className="text-center text-blue-500 mb-4">Wczytywanie numeru przesyłki...</p>}
         {userIdInitError && <p className="text-center text-red-500 mb-4">{userIdInitError}</p>}
         {userId && (
             <p className="text-sm text-gray-600 text-center mb-4 break-all">
-                Twój ID: <span className="font-mono bg-gray-100 p-1 rounded">{userId}</span>
+                Numer przesyłki: <span className="font-mono bg-gray-100 p-1 rounded">{userId}</span>
             </p>
         )}
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
