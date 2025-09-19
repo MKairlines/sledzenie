@@ -28,15 +28,38 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gray-100">
+    <main className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#0b0b0b' }}>
       <form
         onSubmit={handleLogin}
-        className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm"
+        className="shadow-lg"
+        style={{
+          backgroundColor: '#111111',
+          padding: 24,
+          borderRadius: 16,
+          borderWidth: 2,
+          borderColor: '#8a6b3d',
+          width: '88%',
+          maxWidth: 420,
+        }}
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Podaj numer przewozu</h2>
+        <h2
+          className="text-center"
+          style={{
+            fontSize: 24,
+            fontWeight: 800,
+            marginBottom: 18,
+            color: '#d1b07c',
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+          }}
+        >
+          Podaj numer przewozu
+        </h2>
 
         {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+          <p className="text-center" style={{ color: '#ef4444', marginBottom: 12 }}>
+            {error}
+          </p>
         )}
 
         <input
@@ -45,15 +68,49 @@ export default function LoginPage() {
           value={orderNumber}
           onChange={(e) => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
           maxLength={8}
-          className="w-full mb-6 p-3 border rounded-lg"
+          className="w-full rounded-xl"
+          style={{
+            borderWidth: 2,
+            borderColor: '#8a6b3d',
+            padding: 14,
+            marginBottom: 18,
+            color: '#f5f5f5',
+            backgroundColor: '#0b0b0b',
+          }}
         />
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600"
+          className="w-full rounded-full"
+          style={{
+            backgroundColor: '#d1b07c',
+            paddingTop: 16,
+            paddingBottom: 16,
+            paddingLeft: 18,
+            paddingRight: 18,
+            borderRadius: 28,
+            borderWidth: 2,
+            borderColor: '#d1b07c',
+          }}
         >
-          Dalej
+          <span
+            style={{
+              color: '#0b0b0b',
+              fontWeight: 800,
+              fontSize: 18,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              display: 'block',
+            }}
+          >
+            Dalej
+          </span>
         </button>
+
+        <style jsx>{`
+          input::placeholder { color: #8b8b8b; }
+        `}</style>
       </form>
     </main>
   );
