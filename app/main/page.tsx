@@ -213,7 +213,6 @@ export default function Home() {
               paddingTop: 14,
               paddingBottom: 14,
               borderRadius: 28,
-              borderColor: '#d1b07c',
               backgroundColor: (!isTracking || !userId || !!userIdInitError) ? '#2a2a2a' : 'transparent',
               borderColor: (!isTracking || !userId || !!userIdInitError) ? '#555555' : '#d1b07c',
             }}
