@@ -88,16 +88,17 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
-        <p className="text-xl text-blue-500">Ładowanie dashboardu...</p>
+      <main className="flex flex-col items-center justify-center min-h-screen p-4" style={{ backgroundColor: '#0b0b0b' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 mb-4" style={{ borderColor: '#d1b07c' }}></div>
+        <p className="text-xl font-bold tracking-wider uppercase" style={{ color: '#d1b07c' }}>Ładowanie...</p>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
-        <p className="text-xl text-red-500">{error}</p>
+      <main className="flex flex-col items-center justify-center min-h-screen p-4" style={{ backgroundColor: '#0b0b0b' }}>
+        <p className="text-xl font-bold tracking-wider uppercase" style={{ color: '#ef4444' }}>{error}</p>
       </main>
     );
   }
@@ -105,14 +106,14 @@ export default function DashboardPage() {
   const { MapContainer, TileLayer, Marker, Popup } = mapComponents ?? {};
 
   return (
-    <main className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-7xl mt-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          Dashboard śledzenia lokalizacji
+    <main className="flex flex-col items-center p-6 min-h-screen" style={{ backgroundColor: '#0b0b0b' }}>
+      <div className="w-full max-w-7xl mt-8">
+        <h2 className="text-3xl font-bold mb-6 text-center tracking-wider uppercase" style={{ color: '#d1b07c' }}>
+          Śledzone lokalizacje
         </h2>
 
         {activeLocations.length === 0 ? (
-          <p className="text-gray-600 text-center text-lg">
+          <p className="text-center text-lg font-bold tracking-wider uppercase" style={{ color: '#d1b07c' }}>
             Brak aktywnych lokalizacji do wyświetlenia.
           </p>
         ) : (
@@ -149,32 +150,32 @@ export default function DashboardPage() {
                   ))}
                 </MapContainer>
               ) : (
-                <div className="flex items-center justify-center h-full">Ładowanie mapy...</div>
+                <div className="flex items-center justify-center h-full font-bold tracking-wider uppercase" style={{ color: '#d1b07c' }}>Ładowanie mapy...</div>
               )}
             </div>
 
             {/* Sekcja Tabeli */}
             <div className="md:w-1/3 w-full overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg shadow-md">
-                <thead className="bg-gray-200">
+              <table className="min-w-full rounded-lg shadow-md" style={{ backgroundColor: '#0b0b0b' }}>
+                <thead style={{ backgroundColor: '#1a1a1a' }}>
                   <tr>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">
+                    <th className="py-3 px-4 text-left text-sm font-bold tracking-wider uppercase rounded-tl-lg" style={{ color: '#d1b07c' }}>
                       ID Użytkownika
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                    <th className="py-3 px-4 text-left text-sm font-bold tracking-wider uppercase" style={{ color: '#d1b07c' }}>
                       Szerokość
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                    <th className="py-3 px-4 text-left text-sm font-bold tracking-wider uppercase" style={{ color: '#d1b07c' }}>
                       Długość
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {activeLocations.map((loc) => (
-                    <tr key={loc.userId} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-800 break-all">{loc.userId}</td>
-                      <td className="py-3 px-4 text-sm text-gray-800">{loc.latitude.toFixed(6)}</td>
-                      <td className="py-3 px-4 text-sm text-gray-800">{loc.longitude.toFixed(6)}</td>
+                    <tr key={loc.userId} className="border-b" style={{ borderColor: '#8a6b3d' }}>
+                      <td className="py-3 px-4 text-sm font-bold break-all" style={{ color: '#e5e5e5' }}>{loc.userId}</td>
+                      <td className="py-3 px-4 text-sm" style={{ color: '#d1b07c' }}>{loc.latitude.toFixed(6)}</td>
+                      <td className="py-3 px-4 text-sm" style={{ color: '#d1b07c' }}>{loc.longitude.toFixed(6)}</td>
                     </tr>
                   ))}
                 </tbody>
