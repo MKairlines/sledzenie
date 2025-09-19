@@ -139,36 +139,114 @@ export default function Home() {
   }, [userId, sendLocationToServer]); // Added sendLocationToServer to dependencies to ensure correct closure
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Śledzenie</h2>
-        {!userId && !userIdInitError && <p className="text-center text-blue-500 mb-4">Wczytywanie numeru przesyłki...</p>}
-        {userIdInitError && <p className="text-center text-red-500 mb-4">{userIdInitError}</p>}
+    <main className="flex flex-col items-center justify-center min-h-screen p-4" style={{ backgroundColor: '#0b0b0b' }}>
+      <div 
+        className="shadow-xl max-w-md w-full"
+        style={{
+          backgroundColor: '#111111',
+          padding: 20,
+          borderRadius: 16,
+          borderWidth: 2,
+          borderColor: '#8a6b3d',
+        }}
+      >
+        <h2 
+          className="text-center"
+          style={{
+            fontSize: 24,
+            fontWeight: 800,
+            marginBottom: 20,
+            color: '#d1b07c',
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+          }}
+        >
+          Śledzenie
+        </h2>
+        {!userId && !userIdInitError && <p className="text-center" style={{ color: '#c9c9c9', marginBottom: 10 }}>Wczytywanie numeru przesyłki...</p>}
+        {userIdInitError && <p className="text-center" style={{ color: '#ef4444', marginBottom: 10 }}>{userIdInitError}</p>}
         {userId && (
-            <p className="text-sm text-gray-600 text-center mb-4 break-all">
-                Numer przesyłki: <span className="font-mono bg-gray-100 p-1 rounded">{userId}</span>
+            <p className="text-center break-all" style={{ color: '#e5e5e5', marginBottom: 20 }}>
+                Numer przesyłki: <span 
+                  className="font-mono"
+                  style={{
+                    backgroundColor: '#0b0b0b',
+                    color: '#f5f5f5',
+                    padding: 4,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: '#8a6b3d',
+                  }}
+                >{userId}</span>
             </p>
         )}
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
             onClick={startTracking}
             disabled={isTracking || !userId || !!userIdInitError}
-            className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
-                        ${isTracking || !userId || !!userIdInitError ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+            className="flex-1 mx-1 rounded-full border-2"
+            style={{
+              paddingTop: 14,
+              paddingBottom: 14,
+              borderRadius: 28,
+              borderColor: '#d1b07c',
+              backgroundColor: (isTracking || !userId || !!userIdInitError) ? '#2a2a2a' : '#d1b07c',
+              borderColor: (isTracking || !userId || !!userIdInitError) ? '#555555' : '#d1b07c',
+            }}
           >
-            Start śledzenia
+            <span 
+              className="font-bold text-center uppercase"
+              style={{
+                fontWeight: 800,
+                fontSize: 16,
+                letterSpacing: 1.5,
+                color: (isTracking || !userId || !!userIdInitError) ? '#9ca3af' : '#0b0b0b',
+              }}
+            >
+              Start śledzenia
+            </span>
           </button>
           <button
             onClick={stopTracking}
             disabled={!isTracking || !userId || !!userIdInitError}
-            className={`font-semibold py-3 px-6 rounded-lg shadow transition-colors duration-200
-                        ${!isTracking || !userId || !!userIdInitError ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+            className="flex-1 mx-1 rounded-full border-2"
+            style={{
+              paddingTop: 14,
+              paddingBottom: 14,
+              borderRadius: 28,
+              borderColor: '#d1b07c',
+              backgroundColor: (!isTracking || !userId || !!userIdInitError) ? '#2a2a2a' : 'transparent',
+              borderColor: (!isTracking || !userId || !!userIdInitError) ? '#555555' : '#d1b07c',
+            }}
           >
-            Zakończ śledzenie
+            <span 
+              className="font-bold text-center uppercase"
+              style={{
+                fontWeight: 800,
+                fontSize: 16,
+                letterSpacing: 1.5,
+                color: (!isTracking || !userId || !!userIdInitError) ? '#9ca3af' : '#d1b07c',
+              }}
+            >
+              Zakończ śledzenie
+            </span>
           </button>
         </div>
-        <div id="status" className="bg-gray-100 p-4 rounded-lg text-gray-700 font-bold text-lg text-center">
-          {statusText}
+        <div 
+          id="status" 
+          className="p-4 rounded-lg font-bold text-lg text-center"
+          style={{
+            backgroundColor: '#0b0b0b',
+            padding: 16,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: '#8a6b3d',
+            marginTop: 16,
+          }}
+        >
+          <span style={{ fontSize: 16, fontWeight: 'bold', color: '#f5f5f5' }}>
+            {statusText}
+          </span>
         </div>
       </div>
     </main>
